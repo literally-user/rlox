@@ -70,7 +70,7 @@ fn main() {
     match arguments.as_slice() {
         [] => repl(),
         [source] => interpret(source),
-        _ => Err(anyhow!("Invalid command provided; usage: nelox [source]")),
+        _ => Err(anyhow!("Invalid command provided; usage: rlox [source]")),
     }
     .map_err(handle_exception_trace);
 }
