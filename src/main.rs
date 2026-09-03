@@ -49,6 +49,7 @@ fn interpret(source: &str) -> anyhow::Result<()> {
     execute(&content).context("Failed to execute source file")
 }
 
+// Very simple implementation. Maybe i'll improve it in the near future
 fn handle_exception_trace(trace: anyhow::Error) -> ! {
     let mut chain = trace.chain();
 
