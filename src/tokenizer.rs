@@ -70,8 +70,7 @@ static RESERVED: LazyLock<HashMap<&'static str, TokenType>> = LazyLock::new(|| {
             ("var", TokenType::Var),
             ("while", TokenType::While),
         ]
-        .iter()
-        .cloned()
+        .into_iter()
         .collect::<HashMap<&'static str, TokenType>>(),
     )
 });
