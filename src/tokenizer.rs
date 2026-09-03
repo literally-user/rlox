@@ -1,6 +1,8 @@
+use std::{collections::HashMap, sync::LazyLock};
+
 use anyhow::{Context, anyhow};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) enum TokenType {
     // Single-character tokens.
     LeftParen,
@@ -47,6 +49,32 @@ pub(crate) enum TokenType {
     String(String),
     Number(f32),
 }
+
+static RESERVED: LazyLock<HashMap<&'static str, TokenType>> = LazyLock::new(|| {
+    HashMap::from(
+        [
+            ("and", TokenType::And),
+            ("class", TokenType::Class),
+            ("else", TokenType::Else),
+            ("false", TokenType::False),
+            ("fun", TokenType::Fun),
+            ("for", TokenType::For),
+            ("if", TokenType::If),
+            ("nil", TokenType::Nil),
+            ("or", TokenType::Or),
+            ("print", TokenType::Print),
+            ("return", TokenType::Return),
+            ("super", TokenType::Super),
+            ("this", TokenType::This),
+            ("true", TokenType::True),
+            ("var", TokenType::Var),
+            ("while", TokenType::While),
+        ]
+        .iter()
+        .cloned()
+        .collect::<HashMap<&'static str, TokenType>>(),
+    )
+});
 
 #[derive(Debug)]
 pub(crate) struct Token {
@@ -136,6 +164,22 @@ impl<'a> Tokenizer<'a> {
                 .context("Failed to convert string slice to Number")?,
         ))
     }
+
+    fn parse_identifier(&mut self) -> anyhow::Result<TokenType> {
+        self.start = self.pos;
+
+        while self
+            .peek(1)
+            .is_some_and(|c| c.is_ascii_alphanumeric() || *c == b'_')
+        {
+            self.pos += 1;
+        }
+
+        Ok(RESERVED
+            .get(String::from_utf8_lossy(&self.content[self.start..=self.pos]).as_ref())
+            .unwrap_or_else(|| &TokenType::Identifier)
+            .clone())
+    }
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
@@ -188,10 +232,24 @@ impl<'a> Iterator for Tokenizer<'a> {
                 Ok(string) => string,
                 Err(error) => return Some(Err(error)),
             },
-            _ => match self.parse_number().context("Failed to parse number") {
-                Ok(number) => number,
-                Err(error) => return Some(Err(error)),
-            },
+            _ => {
+                let result;
+
+                if character.is_ascii_digit() {
+                    result = self.parse_number().context("Failed to parse number");
+                } else if character.is_ascii_alphabetic() {
+                    result = self
+                        .parse_identifier()
+                        .context("Failed to parse identifier");
+                } else {
+                    return Some(Err(anyhow!("Unexpected character")));
+                }
+
+                match result {
+                    Ok(number) => number,
+                    Err(error) => return Some(Err(error)),
+                }
+            }
         };
 
         let token = Some(Ok(Token::new(
