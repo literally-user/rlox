@@ -1,1 +1,0 @@
-var literally = 10 + 10;
