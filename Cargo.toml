@@ -1,0 +1,16 @@
+[package]
+name = "nelox"
+version = "0.1.0"
+authors = ["Davlat Davydov <xor0000@hotmail.com>"]
+categories = ["interpreters", "compilers", "language", "rust"]
+edition = "2024"
+homepage = "https://github.com/literally-user/rlox"
+description = "Cute & minimal self-hosted package manager written in Rust"
+license = "MIT"
+publish = false
+readme = "README.md"
+repository = "https://github.com/literally-user/rlox"
+
+[dependencies]
+anyhow = "1.0.104"
+log = "0.4.34"

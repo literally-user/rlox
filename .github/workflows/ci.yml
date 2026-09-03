@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "dev" ]
+  pull_request:
+    branches: [ "main", "dev" ]
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_BUILD_WARNINGS: deny
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - build: pinned
+          os: ubuntu-latest
+          rust: 1.96.0
+        - build: stable
+          os: ubuntu-latest
+          rust: stable
+        - build: beta
+          os: ubuntu-latest
+          rust: beta
+        - build: nightly
+          os: ubuntu-latest
+          rust: nightly
+        - build: stable-musl
+          os: ubuntu-latest
+          rust: stable
+          target: x86_64-unknown-linux-musl
+        - build: stable-x86
+          os: ubuntu-latest
+          rust: stable
+          target: i686-unknown-linux-gnu
+        - build: stable-aarch64
+          os: ubuntu-latest
+          rust: stable
+          target: aarch64-unknown-linux-gnu
+        - build: stable-aarch64-musl
+          os: ubuntu-latest
+          rust: stable
+          target: aarch64-unknown-linux-musl
+        - build: stable-arm-gnueabihf
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-gnueabihf
+        - build: stable-arm-musleabihf
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-musleabihf
+        - build: stable-arm-musleabi
+          os: ubuntu-latest
+          rust: stable
+          target: armv7-unknown-linux-musleabi
+        - build: stable-powerpc64
+          os: ubuntu-latest
+          rust: stable
+          target: powerpc64-unknown-linux-gnu
+        - build: stable-s390x
+          os: ubuntu-latest
+          rust: stable
+          target: s390x-unknown-linux-gnu
+        - build: stable-riscv64
+          os: ubuntu-latest
+          rust: stable
+          target: riscv64gc-unknown-linux-gnu
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build
+      run: cargo build --verbose
+    - name: Lint
+      run: cargo clippy --all-targets --all-features --keep-going
+    - name: Run tests
+      run: cargo test --verbose
