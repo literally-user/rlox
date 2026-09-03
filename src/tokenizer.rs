@@ -51,28 +51,26 @@ pub(crate) enum TokenType {
 }
 
 static RESERVED: LazyLock<HashMap<&'static str, TokenType>> = LazyLock::new(|| {
-    HashMap::from(
-        [
-            ("and", TokenType::And),
-            ("class", TokenType::Class),
-            ("else", TokenType::Else),
-            ("false", TokenType::False),
-            ("fun", TokenType::Fun),
-            ("for", TokenType::For),
-            ("if", TokenType::If),
-            ("nil", TokenType::Nil),
-            ("or", TokenType::Or),
-            ("print", TokenType::Print),
-            ("return", TokenType::Return),
-            ("super", TokenType::Super),
-            ("this", TokenType::This),
-            ("true", TokenType::True),
-            ("var", TokenType::Var),
-            ("while", TokenType::While),
-        ]
-        .into_iter()
-        .collect::<HashMap<&'static str, TokenType>>(),
-    )
+    [
+        ("and", TokenType::And),
+        ("class", TokenType::Class),
+        ("else", TokenType::Else),
+        ("false", TokenType::False),
+        ("fun", TokenType::Fun),
+        ("for", TokenType::For),
+        ("if", TokenType::If),
+        ("nil", TokenType::Nil),
+        ("or", TokenType::Or),
+        ("print", TokenType::Print),
+        ("return", TokenType::Return),
+        ("super", TokenType::Super),
+        ("this", TokenType::This),
+        ("true", TokenType::True),
+        ("var", TokenType::Var),
+        ("while", TokenType::While),
+    ]
+    .into_iter()
+    .collect::<HashMap<&'static str, TokenType>>()
 });
 
 #[derive(Debug)]
@@ -100,6 +98,7 @@ pub(crate) struct Tokenizer<'a> {
 }
 
 impl<'a> Tokenizer<'a> {
+    #[must_use]
     pub(crate) fn new(content: &'a [u8]) -> Self {
         Tokenizer {
             content,
@@ -176,7 +175,7 @@ impl<'a> Tokenizer<'a> {
 
         Ok(RESERVED
             .get(String::from_utf8_lossy(&self.content[self.start..=self.pos]).as_ref())
-            .unwrap_or_else(|| &TokenType::Identifier)
+            .unwrap_or(&TokenType::Identifier)
             .clone())
     }
 }
@@ -232,17 +231,14 @@ impl<'a> Iterator for Tokenizer<'a> {
                 Err(error) => return Some(Err(error)),
             },
             _ => {
-                let result;
-
-                if character.is_ascii_digit() {
-                    result = self.parse_number().context("Failed to parse number");
+                let result = if character.is_ascii_digit() {
+                    self.parse_number().context("Failed to parse number")
                 } else if character.is_ascii_alphabetic() {
-                    result = self
-                        .parse_identifier()
-                        .context("Failed to parse identifier");
+                    self.parse_identifier()
+                        .context("Failed to parse identifier")
                 } else {
                     return Some(Err(anyhow!("Unexpected character")));
-                }
+                };
 
                 match result {
                     Ok(number) => number,
