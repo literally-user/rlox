@@ -1,5 +1,5 @@
 [package]
-name = "nelox"
+name = "rlox"
 version = "0.1.0"
 authors = ["Davlat Davydov <xor0000@hotmail.com>"]
 categories = ["interpreters", "compilers", "language", "rust"]
