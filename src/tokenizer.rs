@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::LazyLock};
 
 use anyhow::{Context, anyhow};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) enum TokenType {
     // Single-character tokens.
     LeftParen,
@@ -73,11 +73,11 @@ static RESERVED: LazyLock<HashMap<&'static str, TokenType>> = LazyLock::new(|| {
     .collect::<HashMap<&'static str, TokenType>>()
 });
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(crate) struct Token {
-    token_type: TokenType,
-    lexeme: String,
-    line: usize,
+    pub(crate) token_type: TokenType,
+    pub(crate) lexeme: String,
+    pub(crate) line: usize,
 }
 
 impl Token {
