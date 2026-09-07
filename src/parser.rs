@@ -72,8 +72,6 @@ impl Parser {
 
     fn term(&mut self) -> anyhow::Result<Expression> {
         let mut left = self.factor().context("Failed to parse left hand factor")?;
-
-        println!("123");
         
         loop {
             let op = match self.peek(1) {
