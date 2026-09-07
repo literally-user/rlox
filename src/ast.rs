@@ -18,10 +18,10 @@ pub(crate) enum UnaryOp {
 
 #[derive(Debug)]
 pub(crate) enum BinaryOp {
-    Plus,
-    Minus,
-    Divide,
-    Multiply,
+    Add,
+    Sub,
+    Div,
+    Mul,
     LessOrEqual,
     GreaterOrEqual,
     Less,
