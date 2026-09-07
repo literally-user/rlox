@@ -11,33 +11,53 @@ pub(crate) enum Literal {
 }
 
 #[derive(Debug)]
+pub(crate) enum UnaryOp {
+    Negate,
+    Not,
+}
+
+#[derive(Debug)]
+pub(crate) enum BinaryOp {
+    Plus,
+    Minus,
+    Divide,
+    Multiply,
+    LessOrEqual,
+    GreaterOrEqual,
+    Less,
+    Greater,
+    Equal,
+    NotEqual,
+}
+
+#[derive(Debug)]
 pub(crate) enum Expression {
-    Binary(Binary),
-    Unary(Unary),
+    Binary(Box<Binary>),
+    Unary(Box<Unary>),
     Literal(Literal),
 }
 
 #[derive(Debug)]
 pub(crate) struct Unary {
-    op: Token,
-    right: Box<Expression>,
+    op: UnaryOp,
+    right: Expression
 }
 
 impl Unary {
-    pub(crate) fn new(op: Token, right: Box<Expression>) -> Self {
+    pub(crate) fn new(op: UnaryOp, right: Expression) -> Self {
         Unary { op, right }
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct Binary {
-    right: Box<Expression>,
-    op: Token,
-    left: Box<Expression>,
+    right: Expression,
+    op: BinaryOp,
+    left: Expression,
 }
 
 impl Binary {
-    pub(crate) fn new(left: Box<Expression>, op: Token, right: Box<Expression>) -> Self {
+    pub(crate) fn new(left: Expression, op: BinaryOp, right: Expression) -> Self {
         Binary { left, op, right }
     }
 }
