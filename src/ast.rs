@@ -97,7 +97,7 @@ impl Add for Literal {
             (Literal::String(first), Literal::String(second)) => {
                 Ok(Literal::String(first + &second))
             }
-            _ => Err(anyhow!("Invalid operands types"))?,
+            _ => Err(anyhow!("Invalid operands types")),
         }
     }
 }
@@ -109,11 +109,11 @@ impl Div for Literal {
         match (self, rhs) {
             (Literal::Number(first), Literal::Number(second)) => {
                 if second == 0.0 {
-                    Err(anyhow!("Cannot divide by zero"))?
+                    return Err(anyhow!("Cannot divide by zero"))
                 }
                 Ok(Literal::Number(first / second))
             }
-            _ => Err(anyhow!("Invalid operands types"))?,
+            _ => Err(anyhow!("Invalid operands types")),
         }
     }
 }
@@ -126,13 +126,11 @@ impl Mul for Literal {
             (Literal::Number(first), Literal::Number(second)) => {
                 Ok(Literal::Number(first * second))
             }
-            (Literal::String(first), Literal::Number(second)) => {
+            (Literal::String(first), Literal::Number(second)) |
+            (Literal::Number(second), Literal::String(first)) => {
                 Ok(Literal::String(first.repeat(second as usize)))
             }
-            (Literal::Number(first), Literal::String(second)) => {
-                Ok(Literal::String(second.repeat(first as usize)))
-            }
-            _ => Err(anyhow!("Invalid operands types"))?,
+            _ => Err(anyhow!("Invalid operands types")),
         }
     }
 }
@@ -176,41 +174,38 @@ impl Not for Literal {
 impl Expression for Expr {
     fn eval(self) -> anyhow::Result<Literal> {
         match self {
-            Expr::Binary(binary) => match binary.op {
-                BinaryOp::Add => binary.left.eval()? + binary.right.eval()?,
-                BinaryOp::Mul => binary.left.eval()? * binary.right.eval()?,
-                BinaryOp::Div => binary.left.eval()? / binary.right.eval()?,
-                BinaryOp::Sub => binary.left.eval()? - binary.right.eval()?,
-                _ => {
-                    let result = match binary.op {
-                        BinaryOp::Equal => binary.left.eval()? == binary.right.eval()?,
-                        BinaryOp::NotEqual => binary.left.eval()? != binary.right.eval()?,
-                        BinaryOp::GreaterOrEqual => binary.left.eval()? >= binary.right.eval()?,
-                        BinaryOp::LessOrEqual => binary.left.eval()? <= binary.right.eval()?,
-                        BinaryOp::Greater => binary.left.eval()? > binary.right.eval()?,
-                        BinaryOp::Less => binary.left.eval()? < binary.right.eval()?,
-                        _ => Err(anyhow!("Invalid condition operator"))?,
-                    };
-
-                    if result {
-                        Ok(Literal::True)
-                    } else {
-                        Ok(Literal::False)
+            Expr::Binary(binary) => {
+                let left = binary.left.eval()?;
+                let right = binary.right.eval()?;
+                match binary.op {
+                    BinaryOp::Add => left + right,
+                    BinaryOp::Mul => left * right,
+                    BinaryOp::Div => left / right,
+                    BinaryOp::Sub => left - right,
+                    _ => {
+                        let result = match binary.op {
+                            BinaryOp::Equal => left == right,
+                            BinaryOp::NotEqual => left != right,
+                            BinaryOp::GreaterOrEqual => left >= right,
+                            BinaryOp::LessOrEqual => left <= right,
+                            BinaryOp::Greater => left > right,
+                            BinaryOp::Less => left < right,
+                            _ => Err(anyhow!("Invalid condition operator"))?,
+                        };
+    
+                        if result {
+                            Ok(Literal::True)
+                        } else {
+                            Ok(Literal::False)
+                        }
                     }
                 }
             },
             Expr::Unary(unary) => {
+                let right = unary.right.eval()?;
                 match unary.op {
-                    // Rust doesn't allow something like: !unary.right.eval()?
-                    // TODO: Fix
-                    UnaryOp::Not => {
-                        let a = unary.right.eval()?;
-                        !a
-                    }
-                    UnaryOp::Negate => {
-                        let a = unary.right.eval()?;
-                        -a
-                    }
+                    UnaryOp::Not => !right,
+                    UnaryOp::Negate => -right,
                 }
             }
             Expr::Grouping(grouping) => grouping.eval(),
