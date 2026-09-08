@@ -67,7 +67,11 @@ pub(crate) struct Ternary {
 
 impl Ternary {
     pub(crate) fn new(condition: Expression, success: Expression, failure: Expression) -> Self {
-        Ternary { condition, success, failure }
+        Ternary {
+            condition,
+            success,
+            failure,
+        }
     }
 }
 
