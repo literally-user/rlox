@@ -19,6 +19,8 @@ pub(crate) enum TokenType {
 
     // One or two character tokens.
     Bang,
+    Colon,
+    Question,
     BangEqual,
     Equal,
     EqualEqual,
@@ -222,6 +224,8 @@ impl<'a> Iterator for Tokenizer<'a> {
             b';' => TokenType::Semicolon,
             b'*' => TokenType::Star,
             b'/' => TokenType::Slash,
+            b'?' => TokenType::Question,
+            b':' => TokenType::Colon,
             b'=' => self.match_or(b'=', TokenType::EqualEqual, TokenType::Equal)?,
             b'<' => self.match_or(b'=', TokenType::LessEqual, TokenType::Less)?,
             b'>' => self.match_or(b'=', TokenType::GreaterEqual, TokenType::Greater)?,
