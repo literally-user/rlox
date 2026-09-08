@@ -1,8 +1,7 @@
 use anyhow::{Context, anyhow};
 
 use crate::{
-    ast::{Binary, BinaryOp, Expression, Literal, Unary, UnaryOp},
-    tokenizer::{Token, TokenType},
+    ast::{Binary, BinaryOp, Expression, Literal, Ternary, Unary, UnaryOp}, tokenizer::{Token, TokenType},
 };
 
 pub(crate) struct Parser {
@@ -42,11 +41,26 @@ impl Parser {
         }
     }
 
+    fn ternary(&mut self) -> anyhow::Result<Expression> {
+        let condition = self.primary()?;
+
+        if let TokenType::Question = self.peek(1)?.token_type {
+            self.pos += 2;
+            let success = self.primary()?;
+            self.pos += 2;
+            let failure = self.primary()?;
+
+            Ok(Expression::Ternary(Box::new(Ternary::new(condition, success, failure))))
+        } else {
+            Ok(condition)
+        }
+    }
+    
     fn unary(&mut self) -> anyhow::Result<Expression> {
         let op = match self.peek(0)?.token_type {
             TokenType::Bang => UnaryOp::Not,
             TokenType::Minus => UnaryOp::Negate,
-            _ => return self.primary(),
+            _ => return self.ternary(),
         };
         self.pos += 1;
 
