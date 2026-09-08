@@ -31,21 +31,26 @@ impl Parser {
             TokenType::True => Ok(Expr::Literal(Literal::True)),
             TokenType::LeftParen => {
                 self.pos += 1;
-                let Expr = self.equality()?;
+                let expr = self.equality()?;
                 self.pos += 1;
 
                 self.peek(0).map_err(|_| anyhow!("Unterminated grouping"))?;
 
-                Ok(Expr::Grouping(Box::new(Expr)))
+                Ok(Expr::Grouping(Box::new(expr)))
             }
             _ => Err(anyhow!("Invalid token: {:?}", literal.token_type)),
         }
     }
 
     fn ternary(&mut self) -> anyhow::Result<Expr> {
-        let condition = self.primary()?;
+        let condition = self
+            .primary()
+            .context("Failed to parse ternary condition")?;
 
-        if let TokenType::Question = self.peek(1)?.token_type {
+        if self
+            .peek(1)
+            .is_ok_and(|token| token.token_type == TokenType::Question)
+        {
             self.pos += 2;
             let success = self.primary();
             self.pos += 2;
@@ -55,7 +60,7 @@ impl Parser {
                 (Ok(success), Ok(failure)) => Ok(Expr::Ternary(Box::new(Ternary::new(
                     condition, success, failure,
                 )))),
-                _ => Err(anyhow!("Invalid ternary Expr")),
+                _ => Err(anyhow!("Invalid ternary expression")),
             }
         } else {
             Ok(condition)
