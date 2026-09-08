@@ -1,3 +1,5 @@
+mod ast;
+mod parser;
 mod tokenizer;
 
 use std::{
@@ -7,15 +9,21 @@ use std::{
 
 use anyhow::{Context, anyhow};
 
-use crate::tokenizer::Tokenizer;
+use crate::{
+    parser::Parser,
+    tokenizer::{Token, Tokenizer},
+};
 
 fn execute(content: &[u8]) -> anyhow::Result<()> {
-    let tokens = Tokenizer::new(content);
+    let expression = Parser::new(
+        Tokenizer::new(content)
+            .collect::<anyhow::Result<Vec<Token>>>()
+            .context("Failed to tokenize")?,
+    )
+    .parse()
+    .context("Failed to parse AST")?;
 
-    for token in tokens {
-        let token = token?;
-        println!("{token:?}");
-    }
+    println!("{:#?}", expression);
 
     Ok(())
 }
