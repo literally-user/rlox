@@ -108,6 +108,9 @@ impl Div for Literal {
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (Literal::Number(first), Literal::Number(second)) => {
+                if second == 0.0 {
+                    Err(anyhow!("Cannot divide by zero"))?
+                }
                 Ok(Literal::Number(first / second))
             }
             _ => Err(anyhow!("Invalid operands types"))?,
