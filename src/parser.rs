@@ -22,8 +22,7 @@ impl Parser {
     }
 
     fn primary(&mut self) -> anyhow::Result<Expr> {
-        let literal = self.peek(0)?.clone();
-        match literal.token_type {
+        match self.peek(0)?.clone().token_type {
             TokenType::Number(number) => Ok(Expr::Literal(Literal::Number(number))),
             TokenType::String(string) => Ok(Expr::Literal(Literal::String(string))),
             TokenType::Nil => Ok(Expr::Literal(Literal::Nil)),
@@ -38,7 +37,7 @@ impl Parser {
 
                 Ok(Expr::Grouping(Box::new(expr)))
             }
-            _ => Err(anyhow!("Invalid token: {:?}", literal.token_type)),
+            other => Err(anyhow!("Invalid token: {:?}", other)),
         }
     }
 
