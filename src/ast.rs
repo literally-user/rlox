@@ -143,7 +143,7 @@ impl Sub for Literal {
             (Literal::Number(first), Literal::Number(second)) => {
                 Ok(Literal::Number(first - second))
             }
-            _ => Err(anyhow!("Invalid operands types"))?,
+            _ => Err(anyhow!("Invalid operands types")),
         }
     }
 }
@@ -154,7 +154,7 @@ impl Neg for Literal {
     fn neg(self) -> Self::Output {
         match self {
             Literal::Number(number) => Ok(Literal::Number(-number)),
-            _ => Err(anyhow!("Invalid right hand type"))?,
+            _ => Err(anyhow!("Invalid right hand type")),
         }
     }
 }
@@ -166,7 +166,7 @@ impl Not for Literal {
         match self {
             Literal::True => Ok(Literal::False),
             Literal::False => Ok(Literal::True),
-            _ => Err(anyhow!("Invalid right hand type"))?,
+            _ => Err(anyhow!("Invalid right hand type")),
         }
     }
 }
