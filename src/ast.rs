@@ -1,5 +1,3 @@
-use crate::tokenizer::Token;
-
 #[derive(Debug)]
 pub(crate) enum Literal {
     Nil,
