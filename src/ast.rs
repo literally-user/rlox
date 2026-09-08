@@ -29,42 +29,42 @@ pub(crate) enum BinaryOp {
 }
 
 #[derive(Debug)]
-pub(crate) enum Expression {
+pub(crate) enum Expr {
     Binary(Box<Binary>),
     Unary(Box<Unary>),
     Literal(Literal),
-    Grouping(Box<Expression>),
+    Grouping(Box<Expr>),
     Ternary(Box<Ternary>),
 }
 
 #[derive(Debug)]
 pub(crate) struct Unary {
     op: UnaryOp,
-    right: Expression,
+    right: Expr,
 }
 
 impl Unary {
-    pub(crate) fn new(op: UnaryOp, right: Expression) -> Self {
+    pub(crate) fn new(op: UnaryOp, right: Expr) -> Self {
         Unary { op, right }
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct Binary {
-    right: Expression,
+    right: Expr,
     op: BinaryOp,
-    left: Expression,
+    left: Expr,
 }
 
 #[derive(Debug)]
 pub(crate) struct Ternary {
-    condition: Expression,
-    success: Expression,
-    failure: Expression,
+    condition: Expr,
+    success: Expr,
+    failure: Expr,
 }
 
 impl Ternary {
-    pub(crate) fn new(condition: Expression, success: Expression, failure: Expression) -> Self {
+    pub(crate) fn new(condition: Expr, success: Expr, failure: Expr) -> Self {
         Ternary {
             condition,
             success,
@@ -74,7 +74,7 @@ impl Ternary {
 }
 
 impl Binary {
-    pub(crate) fn new(left: Expression, op: BinaryOp, right: Expression) -> Self {
+    pub(crate) fn new(left: Expr, op: BinaryOp, right: Expr) -> Self {
         Binary { left, op, right }
     }
 }

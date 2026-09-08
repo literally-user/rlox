@@ -1,7 +1,7 @@
 use anyhow::{Context, anyhow};
 
 use crate::{
-    ast::{Binary, BinaryOp, Expression, Literal, Ternary, Unary, UnaryOp},
+    ast::{Binary, BinaryOp, Expr, Literal, Ternary, Unary, UnaryOp},
     tokenizer::{Token, TokenType},
 };
 
@@ -21,28 +21,28 @@ impl Parser {
             .context("Invalid token index")
     }
 
-    fn primary(&mut self) -> anyhow::Result<Expression> {
+    fn primary(&mut self) -> anyhow::Result<Expr> {
         let literal = self.peek(0)?.clone();
         match literal.token_type {
-            TokenType::Number(number) => Ok(Expression::Literal(Literal::Number(number))),
-            TokenType::String(string) => Ok(Expression::Literal(Literal::String(string))),
-            TokenType::Nil => Ok(Expression::Literal(Literal::Nil)),
-            TokenType::False => Ok(Expression::Literal(Literal::False)),
-            TokenType::True => Ok(Expression::Literal(Literal::True)),
+            TokenType::Number(number) => Ok(Expr::Literal(Literal::Number(number))),
+            TokenType::String(string) => Ok(Expr::Literal(Literal::String(string))),
+            TokenType::Nil => Ok(Expr::Literal(Literal::Nil)),
+            TokenType::False => Ok(Expr::Literal(Literal::False)),
+            TokenType::True => Ok(Expr::Literal(Literal::True)),
             TokenType::LeftParen => {
                 self.pos += 1;
-                let expression = self.equality()?;
+                let Expr = self.equality()?;
                 self.pos += 1;
 
                 self.peek(0).map_err(|_| anyhow!("Unterminated grouping"))?;
 
-                Ok(Expression::Grouping(Box::new(expression)))
+                Ok(Expr::Grouping(Box::new(Expr)))
             }
             _ => Err(anyhow!("Invalid token: {:?}", literal.token_type)),
         }
     }
 
-    fn ternary(&mut self) -> anyhow::Result<Expression> {
+    fn ternary(&mut self) -> anyhow::Result<Expr> {
         let condition = self.primary()?;
 
         if let TokenType::Question = self.peek(1)?.token_type {
@@ -52,17 +52,17 @@ impl Parser {
             let failure = self.primary();
 
             match (success, failure) {
-                (Ok(success), Ok(failure)) => Ok(Expression::Ternary(Box::new(Ternary::new(
+                (Ok(success), Ok(failure)) => Ok(Expr::Ternary(Box::new(Ternary::new(
                     condition, success, failure,
                 )))),
-                _ => Err(anyhow!("Invalid ternary expression")),
+                _ => Err(anyhow!("Invalid ternary Expr")),
             }
         } else {
             Ok(condition)
         }
     }
 
-    fn unary(&mut self) -> anyhow::Result<Expression> {
+    fn unary(&mut self) -> anyhow::Result<Expr> {
         let op = match self.peek(0)?.token_type {
             TokenType::Bang => UnaryOp::Not,
             TokenType::Minus => UnaryOp::Negate,
@@ -72,10 +72,10 @@ impl Parser {
 
         let right = self.unary().context("Failed to parse right hand unary")?;
 
-        Ok(Expression::Unary(Box::new(Unary::new(op, right))))
+        Ok(Expr::Unary(Box::new(Unary::new(op, right))))
     }
 
-    fn factor(&mut self) -> anyhow::Result<Expression> {
+    fn factor(&mut self) -> anyhow::Result<Expr> {
         let mut left = self.unary().context("Failed to parse left hand unary")?;
 
         loop {
@@ -91,13 +91,13 @@ impl Parser {
 
             let right = self.unary().context("Failed to parse right hand unary")?;
 
-            left = Expression::Binary(Box::new(Binary::new(left, op, right)));
+            left = Expr::Binary(Box::new(Binary::new(left, op, right)));
         }
 
         Ok(left)
     }
 
-    fn term(&mut self) -> anyhow::Result<Expression> {
+    fn term(&mut self) -> anyhow::Result<Expr> {
         let mut left = self.factor().context("Failed to parse left hand factor")?;
 
         loop {
@@ -113,13 +113,13 @@ impl Parser {
 
             let right = self.factor().context("Failed to parse right hand factor")?;
 
-            left = Expression::Binary(Box::new(Binary::new(left, op, right)));
+            left = Expr::Binary(Box::new(Binary::new(left, op, right)));
         }
 
         Ok(left)
     }
 
-    fn comparison(&mut self) -> anyhow::Result<Expression> {
+    fn comparison(&mut self) -> anyhow::Result<Expr> {
         let mut left = self.term().context("Failed to parse left hand term")?;
 
         loop {
@@ -137,13 +137,13 @@ impl Parser {
 
             let right = self.term().context("Failed to parse right hand term")?;
 
-            left = Expression::Binary(Box::new(Binary::new(left, op, right)));
+            left = Expr::Binary(Box::new(Binary::new(left, op, right)));
         }
 
         Ok(left)
     }
 
-    fn equality(&mut self) -> anyhow::Result<Expression> {
+    fn equality(&mut self) -> anyhow::Result<Expr> {
         let mut left = self
             .comparison()
             .context("Failed to parse left hand comparison")?;
@@ -163,13 +163,13 @@ impl Parser {
                 .comparison()
                 .context("Failed to parse right hand comparison")?;
 
-            left = Expression::Binary(Box::new(Binary::new(left, op, right)));
+            left = Expr::Binary(Box::new(Binary::new(left, op, right)));
         }
 
         Ok(left)
     }
 
-    pub(crate) fn parse(&mut self) -> anyhow::Result<Expression> {
+    pub(crate) fn parse(&mut self) -> anyhow::Result<Expr> {
         self.equality()
     }
 }
