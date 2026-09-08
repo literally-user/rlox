@@ -22,12 +22,12 @@ impl Parser {
     }
 
     fn primary(&mut self) -> anyhow::Result<Expr> {
-        match self.peek(0)?.clone().token_type {
-            TokenType::Number(number) => Ok(Expr::Literal(Literal::Number(number))),
-            TokenType::String(string) => Ok(Expr::Literal(Literal::String(string))),
-            TokenType::Nil => Ok(Expr::Literal(Literal::Nil)),
-            TokenType::False => Ok(Expr::Literal(Literal::False)),
-            TokenType::True => Ok(Expr::Literal(Literal::True)),
+        let result = match &self.peek(0)?.token_type {
+            TokenType::Number(number) => Expr::Literal(Literal::Number(*number)),
+            TokenType::String(string) => Expr::Literal(Literal::String(string.clone())),
+            TokenType::Nil => Expr::Literal(Literal::Nil),
+            TokenType::False => Expr::Literal(Literal::False),
+            TokenType::True => Expr::Literal(Literal::True),
             TokenType::LeftParen => {
                 self.pos += 1;
                 let expr = self.equality()?;
@@ -35,10 +35,12 @@ impl Parser {
 
                 self.peek(0).map_err(|_| anyhow!("Unterminated grouping"))?;
 
-                Ok(Expr::Grouping(Box::new(expr)))
+                Expr::Grouping(Box::new(expr))
             }
-            other => Err(anyhow!("Invalid token: {:?}", other)),
-        }
+            other => Err(anyhow!("Invalid token: {:?}", other))?,
+        };
+
+        Ok(result)
     }
 
     fn ternary(&mut self) -> anyhow::Result<Expr> {

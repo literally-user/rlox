@@ -109,7 +109,7 @@ impl Div for Literal {
         match (self, rhs) {
             (Literal::Number(first), Literal::Number(second)) => {
                 if second == 0.0 {
-                    return Err(anyhow!("Cannot divide by zero"))
+                    return Err(anyhow!("Cannot divide by zero"));
                 }
                 Ok(Literal::Number(first / second))
             }
@@ -126,8 +126,8 @@ impl Mul for Literal {
             (Literal::Number(first), Literal::Number(second)) => {
                 Ok(Literal::Number(first * second))
             }
-            (Literal::String(first), Literal::Number(second)) |
-            (Literal::Number(second), Literal::String(first)) => {
+            (Literal::String(first), Literal::Number(second))
+            | (Literal::Number(second), Literal::String(first)) => {
                 Ok(Literal::String(first.repeat(second as usize)))
             }
             _ => Err(anyhow!("Invalid operands types")),
@@ -192,7 +192,7 @@ impl Expression for Expr {
                             BinaryOp::Less => left < right,
                             _ => Err(anyhow!("Invalid condition operator"))?,
                         };
-    
+
                         if result {
                             Ok(Literal::True)
                         } else {
@@ -200,7 +200,7 @@ impl Expression for Expr {
                         }
                     }
                 }
-            },
+            }
             Expr::Unary(unary) => {
                 let right = unary.right.eval()?;
                 match unary.op {
