@@ -35,12 +35,13 @@ pub(crate) enum Expression {
     Binary(Box<Binary>),
     Unary(Box<Unary>),
     Literal(Literal),
+    Grouping(Box<Expression>),
 }
 
 #[derive(Debug)]
 pub(crate) struct Unary {
     op: UnaryOp,
-    right: Expression
+    right: Expression,
 }
 
 impl Unary {

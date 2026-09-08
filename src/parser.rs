@@ -1,7 +1,8 @@
 use anyhow::{Context, anyhow};
 
 use crate::{
-    ast::{Binary, BinaryOp, Expression, Literal, Unary, UnaryOp}, tokenizer::{Token, TokenType},
+    ast::{Binary, BinaryOp, Expression, Literal, Unary, UnaryOp},
+    tokenizer::{Token, TokenType},
 };
 
 pub(crate) struct Parser {
@@ -28,6 +29,15 @@ impl Parser {
             TokenType::Nil => Ok(Expression::Literal(Literal::Nil)),
             TokenType::False => Ok(Expression::Literal(Literal::False)),
             TokenType::True => Ok(Expression::Literal(Literal::True)),
+            TokenType::LeftParen => {
+                self.pos += 1;
+                let expression = self.equality()?;
+                self.pos += 1;
+
+                self.peek(0).map_err(|_| anyhow!("Unterminated grouping"))?;
+
+                Ok(Expression::Grouping(Box::new(expression)))
+            }
             _ => Err(anyhow!("Invalid token: {:?}", literal.token_type)),
         }
     }
@@ -39,14 +49,11 @@ impl Parser {
             _ => return self.primary(),
         };
         self.pos += 1;
-        
-        let right = self
-            .unary()
-            .context("Failed to parse right hand unary")?;
-        
+
+        let right = self.unary().context("Failed to parse right hand unary")?;
+
         Ok(Expression::Unary(Box::new(Unary::new(op, right))))
     }
-
 
     fn factor(&mut self) -> anyhow::Result<Expression> {
         let mut left = self.unary().context("Failed to parse left hand unary")?;
@@ -63,16 +70,16 @@ impl Parser {
             self.pos += 2;
 
             let right = self.unary().context("Failed to parse right hand unary")?;
-            
+
             left = Expression::Binary(Box::new(Binary::new(left, op, right)));
         }
-        
+
         Ok(left)
     }
 
     fn term(&mut self) -> anyhow::Result<Expression> {
         let mut left = self.factor().context("Failed to parse left hand factor")?;
-        
+
         loop {
             let op = match self.peek(1) {
                 Ok(token) => match token.token_type {
@@ -85,16 +92,16 @@ impl Parser {
             self.pos += 2;
 
             let right = self.factor().context("Failed to parse right hand factor")?;
-            
+
             left = Expression::Binary(Box::new(Binary::new(left, op, right)));
         }
-        
+
         Ok(left)
     }
 
     fn comparison(&mut self) -> anyhow::Result<Expression> {
         let mut left = self.term().context("Failed to parse left hand term")?;
-        
+
         loop {
             let op = match self.peek(1) {
                 Ok(token) => match token.token_type {
@@ -109,16 +116,18 @@ impl Parser {
             self.pos += 2;
 
             let right = self.term().context("Failed to parse right hand term")?;
-            
+
             left = Expression::Binary(Box::new(Binary::new(left, op, right)));
         }
-        
+
         Ok(left)
     }
 
     fn equality(&mut self) -> anyhow::Result<Expression> {
-        let mut left = self.comparison().context("Failed to parse left hand comparison")?;
-        
+        let mut left = self
+            .comparison()
+            .context("Failed to parse left hand comparison")?;
+
         loop {
             let op = match self.peek(1) {
                 Ok(token) => match token.token_type {
@@ -130,11 +139,13 @@ impl Parser {
             };
             self.pos += 2;
 
-            let right = self.comparison().context("Failed to parse right hand comparison")?;
-            
+            let right = self
+                .comparison()
+                .context("Failed to parse right hand comparison")?;
+
             left = Expression::Binary(Box::new(Binary::new(left, op, right)));
         }
-        
+
         Ok(left)
     }
 
