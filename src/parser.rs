@@ -117,8 +117,6 @@ impl Parser {
             self.pos += 2;
             let right = self.factor()?;
             left = Expr::Binary(Box::new(Binary::new(left, op, right)));
-
-            Err(ParsingError::UnfinishedArithmeticExpression)?
         }
 
         Ok(left)
@@ -163,8 +161,6 @@ impl Parser {
             self.pos += 2;
             let right = self.comparison()?;
             left = Expr::Binary(Box::new(Binary::new(left, op, right)));
-
-            Err(ParsingError::UnfinishedEqualityExpression)?
         }
 
         Ok(left)
