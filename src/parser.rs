@@ -53,9 +53,9 @@ impl Parser {
             .is_ok_and(|token| token.token_type == TokenType::Question)
         {
             self.pos += 2;
-            let success = self.primary();
+            let success = self.equality();
             self.pos += 2;
-            let failure = self.primary();
+            let failure = self.equality();
 
             match (success, failure) {
                 (Ok(success), Ok(failure)) => Ok(Expr::Ternary(Box::new(Ternary::new(
