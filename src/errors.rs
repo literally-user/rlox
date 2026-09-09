@@ -2,9 +2,9 @@ use std::{error::Error, fmt::Display, num::ParseFloatError, str::Utf8Error};
 
 #[derive(Debug)]
 pub enum EvaluationError {
-    UnaryConvertionError(UnaryConvertionError),
-    ArithmeticError(ArithmeticError),
-    ConditionError(ConditionError),
+    UnaryConvertion(UnaryConvertionError),
+    Arithmetic(ArithmeticError),
+    Condition(ConditionError),
 }
 
 #[derive(Debug)]
@@ -60,13 +60,13 @@ impl Display for UnaryConvertionError {
 impl Display for EvaluationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            EvaluationError::ArithmeticError(error) => {
+            EvaluationError::Arithmetic(error) => {
                 write!(f, "arithmetic evaluation failed: {}", error)
             }
-            EvaluationError::ConditionError(error) => {
+            EvaluationError::Condition(error) => {
                 write!(f, "condition evaluation failed: {}", error)
             }
-            EvaluationError::UnaryConvertionError(error) => {
+            EvaluationError::UnaryConvertion(error) => {
                 write!(f, "unary convertion failed: {}", error)
             }
         }
@@ -158,19 +158,19 @@ impl Display for TokenizeError {
 
 impl From<ConditionError> for EvaluationError {
     fn from(value: ConditionError) -> Self {
-        EvaluationError::ConditionError(value)
+        EvaluationError::Condition(value)
     }
 }
 
 impl From<ArithmeticError> for EvaluationError {
     fn from(value: ArithmeticError) -> Self {
-        EvaluationError::ArithmeticError(value)
+        EvaluationError::Arithmetic(value)
     }
 }
 
 impl From<UnaryConvertionError> for EvaluationError {
     fn from(value: UnaryConvertionError) -> Self {
-        EvaluationError::UnaryConvertionError(value)
+        EvaluationError::UnaryConvertion(value)
     }
 }
 

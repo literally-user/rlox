@@ -17,7 +17,7 @@ fn execute(content: &[u8]) -> anyhow::Result<()> {
         .collect::<Result<Vec<_>, TokenizeError>>()
         .context("failed to tokenize")?;
 
-    if tokens.len() > 0 {
+    if !tokens.is_empty() {
         let expression = Parser::new(tokens).parse().context("failed to parse AST")?;
 
         println!("{:#?}", expression.eval());

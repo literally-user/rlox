@@ -1,5 +1,3 @@
-use anyhow::{Context, anyhow};
-
 use crate::{
     ast::{Binary, BinaryOp, Expr, Literal, Ternary, Unary, UnaryOp},
     errors::ParsingError,
@@ -84,16 +82,12 @@ impl Parser {
     fn factor(&mut self) -> Result<Expr, ParsingError> {
         let mut left = self.unary()?;
 
-        loop {
-            let op = match self.peek(1) {
-                Ok(token) => match token.token_type {
-                    TokenType::Star => BinaryOp::Mul,
-                    TokenType::Slash => BinaryOp::Div,
-                    _ => break,
-                },
-                Err(_) => break,
+        while let Ok(token) = self.peek(1) {
+            let op = match token.token_type {
+                TokenType::Star => BinaryOp::Mul,
+                TokenType::Slash => BinaryOp::Div,
+                _ => break,
             };
-
             if self.peek(2).is_err() {
                 Err(ParsingError::UnfinishedArithmeticExpression)?;
             }
@@ -109,14 +103,11 @@ impl Parser {
     fn term(&mut self) -> Result<Expr, ParsingError> {
         let mut left = self.factor()?;
 
-        loop {
-            let op = match self.peek(1) {
-                Ok(token) => match token.token_type {
-                    TokenType::Plus => BinaryOp::Add,
-                    TokenType::Minus => BinaryOp::Sub,
-                    _ => break,
-                },
-                Err(_) => break,
+        while let Ok(token) = self.peek(1) {
+            let op = match token.token_type {
+                TokenType::Plus => BinaryOp::Add,
+                TokenType::Minus => BinaryOp::Sub,
+                _ => break,
             };
 
             if self.peek(2).is_err() {
@@ -136,16 +127,13 @@ impl Parser {
     fn comparison(&mut self) -> Result<Expr, ParsingError> {
         let mut left = self.term()?;
 
-        loop {
-            let op = match self.peek(1) {
-                Ok(token) => match token.token_type {
-                    TokenType::LessEqual => BinaryOp::LessOrEqual,
-                    TokenType::Less => BinaryOp::Less,
-                    TokenType::Greater => BinaryOp::Greater,
-                    TokenType::GreaterEqual => BinaryOp::GreaterOrEqual,
-                    _ => break,
-                },
-                Err(_) => break,
+        while let Ok(token) = self.peek(1) {
+            let op = match token.token_type {
+                TokenType::LessEqual => BinaryOp::LessOrEqual,
+                TokenType::Less => BinaryOp::Less,
+                TokenType::Greater => BinaryOp::Greater,
+                TokenType::GreaterEqual => BinaryOp::GreaterOrEqual,
+                _ => break,
             };
             if self.peek(2).is_err() {
                 Err(ParsingError::UnfinishedComparisonExpression)?;
@@ -162,14 +150,11 @@ impl Parser {
     fn equality(&mut self) -> Result<Expr, ParsingError> {
         let mut left = self.comparison()?;
 
-        loop {
-            let op = match self.peek(1) {
-                Ok(token) => match token.token_type {
-                    TokenType::EqualEqual => BinaryOp::Equal,
-                    TokenType::BangEqual => BinaryOp::NotEqual,
-                    _ => break,
-                },
-                Err(_) => break,
+        while let Ok(token) = self.peek(1) {
+            let op = match token.token_type {
+                TokenType::EqualEqual => BinaryOp::Equal,
+                TokenType::BangEqual => BinaryOp::NotEqual,
+                _ => break,
             };
             if self.peek(2).is_err() {
                 Err(ParsingError::UnfinishedEqualityExpression)?;
