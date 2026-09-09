@@ -1,13 +1,13 @@
 use std::ops::{Add, Div, Mul, Neg, Not, Sub};
 
-use anyhow::anyhow;
+use crate::errors::{ArithmeticError, ConditionError, EvaluationError, UnaryConvertionError};
 
-pub(crate) trait Expression {
-    fn eval(self) -> anyhow::Result<Literal>;
+pub trait Expression {
+    fn eval(self) -> Result<Literal, EvaluationError>;
 }
 
 #[derive(Debug, PartialEq, PartialOrd)]
-pub(crate) enum Literal {
+pub enum Literal {
     Nil,
     True,
     False,
@@ -16,13 +16,13 @@ pub(crate) enum Literal {
 }
 
 #[derive(Debug)]
-pub(crate) enum UnaryOp {
+pub enum UnaryOp {
     Negate,
     Not,
 }
 
 #[derive(Debug)]
-pub(crate) enum BinaryOp {
+pub enum BinaryOp {
     Add,
     Sub,
     Div,
@@ -36,7 +36,7 @@ pub(crate) enum BinaryOp {
 }
 
 #[derive(Debug)]
-pub(crate) enum Expr {
+pub enum Expr {
     Binary(Box<Binary>),
     Unary(Box<Unary>),
     Literal(Literal),
@@ -45,27 +45,27 @@ pub(crate) enum Expr {
 }
 
 #[derive(Debug)]
-pub(crate) struct Unary {
+pub struct Unary {
     op: UnaryOp,
     right: Expr,
 }
 
 #[derive(Debug)]
-pub(crate) struct Binary {
+pub struct Binary {
     right: Expr,
     op: BinaryOp,
     left: Expr,
 }
 
 #[derive(Debug)]
-pub(crate) struct Ternary {
+pub struct Ternary {
     condition: Expr,
     success: Expr,
     failure: Expr,
 }
 
 impl Ternary {
-    pub(crate) fn new(condition: Expr, success: Expr, failure: Expr) -> Self {
+    pub fn new(condition: Expr, success: Expr, failure: Expr) -> Self {
         Ternary {
             condition,
             success,
@@ -75,19 +75,19 @@ impl Ternary {
 }
 
 impl Binary {
-    pub(crate) fn new(left: Expr, op: BinaryOp, right: Expr) -> Self {
+    pub fn new(left: Expr, op: BinaryOp, right: Expr) -> Self {
         Binary { left, op, right }
     }
 }
 
 impl Unary {
-    pub(crate) fn new(op: UnaryOp, right: Expr) -> Self {
+    pub fn new(op: UnaryOp, right: Expr) -> Self {
         Unary { op, right }
     }
 }
 
 impl Add for Literal {
-    type Output = anyhow::Result<Literal>;
+    type Output = Result<Literal, ArithmeticError>;
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
@@ -97,29 +97,29 @@ impl Add for Literal {
             (Literal::String(first), Literal::String(second)) => {
                 Ok(Literal::String(first + &second))
             }
-            _ => Err(anyhow!("Invalid operands types")),
+            _ => Err(ArithmeticError::InvalidOperandsTypes),
         }
     }
 }
 
 impl Div for Literal {
-    type Output = anyhow::Result<Literal>;
+    type Output = Result<Literal, ArithmeticError>;
 
     fn div(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (Literal::Number(first), Literal::Number(second)) => {
                 if second == 0.0 {
-                    return Err(anyhow!("Cannot divide by zero"));
+                    return Err(ArithmeticError::ZeroDivision);
                 }
                 Ok(Literal::Number(first / second))
             }
-            _ => Err(anyhow!("Invalid operands types")),
+            _ => Err(ArithmeticError::InvalidOperandsTypes),
         }
     }
 }
 
 impl Mul for Literal {
-    type Output = anyhow::Result<Literal>;
+    type Output = Result<Literal, ArithmeticError>;
 
     fn mul(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
@@ -130,54 +130,54 @@ impl Mul for Literal {
             | (Literal::Number(second), Literal::String(first)) => {
                 Ok(Literal::String(first.repeat(second as usize)))
             }
-            _ => Err(anyhow!("Invalid operands types")),
+            _ => Err(ArithmeticError::InvalidOperandsTypes),
         }
     }
 }
 
 impl Sub for Literal {
-    type Output = anyhow::Result<Literal>;
+    type Output = Result<Literal, ArithmeticError>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         match (self, rhs) {
             (Literal::Number(first), Literal::Number(second)) => {
                 Ok(Literal::Number(first - second))
             }
-            _ => Err(anyhow!("Invalid operands types")),
+            _ => Err(ArithmeticError::InvalidOperandsTypes),
         }
     }
 }
 
 impl Neg for Literal {
-    type Output = anyhow::Result<Literal>;
+    type Output = Result<Literal, UnaryConvertionError>;
 
     fn neg(self) -> Self::Output {
         match self {
             Literal::Number(number) => Ok(Literal::Number(-number)),
-            _ => Err(anyhow!("Invalid right hand type")),
+            _ => Err(UnaryConvertionError::InvalidRightHandType),
         }
     }
 }
 
 impl Not for Literal {
-    type Output = anyhow::Result<Literal>;
+    type Output = Result<Literal, UnaryConvertionError>;
 
     fn not(self) -> Self::Output {
         match self {
             Literal::True => Ok(Literal::False),
             Literal::False => Ok(Literal::True),
-            _ => Err(anyhow!("Invalid right hand type")),
+            _ => Err(UnaryConvertionError::InvalidRightHandType),
         }
     }
 }
 
 impl Expression for Expr {
-    fn eval(self) -> anyhow::Result<Literal> {
+    fn eval(self) -> Result<Literal, EvaluationError> {
         match self {
             Expr::Binary(binary) => {
                 let left = binary.left.eval()?;
                 let right = binary.right.eval()?;
-                match binary.op {
+                let result = match binary.op {
                     BinaryOp::Add => left + right,
                     BinaryOp::Mul => left * right,
                     BinaryOp::Div => left / right,
@@ -190,7 +190,7 @@ impl Expression for Expr {
                             BinaryOp::LessOrEqual => left <= right,
                             BinaryOp::Greater => left > right,
                             BinaryOp::Less => left < right,
-                            _ => Err(anyhow!("Invalid condition operator"))?,
+                            _ => Err(ConditionError::InvalidCondition)?,
                         };
 
                         if result {
@@ -199,14 +199,18 @@ impl Expression for Expr {
                             Ok(Literal::False)
                         }
                     }
-                }
+                };
+
+                Ok(result?)
             }
             Expr::Unary(unary) => {
                 let right = unary.right.eval()?;
-                match unary.op {
+                let result = match unary.op {
                     UnaryOp::Not => !right,
                     UnaryOp::Negate => -right,
-                }
+                };
+
+                Ok(result?)
             }
             Expr::Grouping(grouping) => grouping.eval(),
             Expr::Literal(literal) => Ok(literal),
@@ -214,7 +218,7 @@ impl Expression for Expr {
                 let op = match ternary.condition.eval()? {
                     Literal::False => false,
                     Literal::True => true,
-                    _ => Err(anyhow!("Invalid condition"))?,
+                    _ => Err(ConditionError::InvalidCondition)?,
                 };
 
                 if op {
