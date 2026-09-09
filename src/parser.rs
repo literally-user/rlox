@@ -109,7 +109,6 @@ impl Parser {
                 TokenType::Minus => BinaryOp::Sub,
                 _ => break,
             };
-
             if self.peek(2).is_err() {
                 Err(ParsingError::UnfinishedArithmeticExpression)?;
             }
