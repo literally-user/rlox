@@ -72,7 +72,7 @@ static RESERVED: LazyLock<HashMap<&'static str, TokenType>> = LazyLock::new(|| {
         ("while", TokenType::While),
     ]
     .into_iter()
-    .collect::<HashMap<&'static str, TokenType>>()
+    .collect::<_>()
 });
 
 #[derive(Debug, Clone)]
@@ -211,8 +211,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             }
         }
 
-        let character = self.peek(0)?;
-        let token_type = match character {
+        let token_type = match self.peek(0)? {
             b'(' => TokenType::LeftParen,
             b')' => TokenType::RightParen,
             b'{' => TokenType::LeftBrace,
@@ -234,10 +233,10 @@ impl<'a> Iterator for Tokenizer<'a> {
                 Ok(string) => string,
                 Err(error) => return Some(Err(error)),
             },
-            _ => {
-                let result = if character.is_ascii_digit() {
+            other => {
+                let result = if other.is_ascii_digit() {
                     self.parse_number().context("Failed to parse number")
-                } else if character.is_ascii_alphabetic() {
+                } else if other.is_ascii_alphabetic() {
                     self.parse_identifier()
                         .context("Failed to parse identifier")
                 } else {

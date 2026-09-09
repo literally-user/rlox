@@ -22,30 +22,36 @@ impl Parser {
     }
 
     fn primary(&mut self) -> anyhow::Result<Expr> {
-        let literal = self.peek(0)?.clone();
-        match literal.token_type {
-            TokenType::Number(number) => Ok(Expr::Literal(Literal::Number(number))),
-            TokenType::String(string) => Ok(Expr::Literal(Literal::String(string))),
-            TokenType::Nil => Ok(Expr::Literal(Literal::Nil)),
-            TokenType::False => Ok(Expr::Literal(Literal::False)),
-            TokenType::True => Ok(Expr::Literal(Literal::True)),
+        let result = match &self.peek(0)?.token_type {
+            TokenType::Number(number) => Expr::Literal(Literal::Number(*number)),
+            TokenType::String(string) => Expr::Literal(Literal::String(string.clone())),
+            TokenType::Nil => Expr::Literal(Literal::Nil),
+            TokenType::False => Expr::Literal(Literal::False),
+            TokenType::True => Expr::Literal(Literal::True),
             TokenType::LeftParen => {
                 self.pos += 1;
-                let Expr = self.equality()?;
+                let expr = self.equality()?;
                 self.pos += 1;
 
                 self.peek(0).map_err(|_| anyhow!("Unterminated grouping"))?;
 
-                Ok(Expr::Grouping(Box::new(Expr)))
+                Expr::Grouping(Box::new(expr))
             }
-            _ => Err(anyhow!("Invalid token: {:?}", literal.token_type)),
-        }
+            other => Err(anyhow!("Invalid token: {:?}", other))?,
+        };
+
+        Ok(result)
     }
 
     fn ternary(&mut self) -> anyhow::Result<Expr> {
-        let condition = self.primary()?;
+        let condition = self
+            .primary()
+            .context("Failed to parse ternary condition")?;
 
-        if let TokenType::Question = self.peek(1)?.token_type {
+        if self
+            .peek(1)
+            .is_ok_and(|token| token.token_type == TokenType::Question)
+        {
             self.pos += 2;
             let success = self.primary();
             self.pos += 2;
@@ -55,7 +61,7 @@ impl Parser {
                 (Ok(success), Ok(failure)) => Ok(Expr::Ternary(Box::new(Ternary::new(
                     condition, success, failure,
                 )))),
-                _ => Err(anyhow!("Invalid ternary Expr")),
+                _ => Err(anyhow!("Invalid ternary expression")),
             }
         } else {
             Ok(condition)

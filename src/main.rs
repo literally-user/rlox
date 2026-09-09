@@ -10,6 +10,7 @@ use std::{
 use anyhow::{Context, anyhow};
 
 use crate::{
+    ast::Expression,
     parser::Parser,
     tokenizer::{Token, Tokenizer},
 };
@@ -23,7 +24,7 @@ fn execute(content: &[u8]) -> anyhow::Result<()> {
     .parse()
     .context("Failed to parse AST")?;
 
-    println!("{:#?}", expression);
+    println!("{:#?}", expression.eval());
 
     Ok(())
 }
