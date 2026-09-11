@@ -1,9 +1,9 @@
 use std::{collections::HashMap, sync::LazyLock};
 
-use anyhow::{Context, anyhow};
+use crate::errors::TokenizeError;
 
 #[derive(Debug, Clone, PartialEq)]
-pub(crate) enum TokenType {
+pub enum TokenType {
     // Single-character tokens.
     LeftParen,
     RightParen,
@@ -75,24 +75,22 @@ static RESERVED: LazyLock<HashMap<&'static str, TokenType>> = LazyLock::new(|| {
     .collect::<_>()
 });
 
-#[derive(Debug, Clone)]
-pub(crate) struct Token {
-    pub(crate) token_type: TokenType,
-    pub(crate) lexeme: String,
-    pub(crate) line: usize,
+#[derive(Debug)]
+pub struct Token {
+    pub token_type: TokenType,
+    pub lexeme: String,
 }
 
 impl Token {
-    pub(crate) fn new(line: usize, token_type: TokenType, lexeme: &[u8]) -> Self {
+    pub fn new(token_type: TokenType, lexeme: &[u8]) -> Self {
         Token {
             token_type,
             lexeme: String::from_utf8_lossy(lexeme).to_string(),
-            line,
         }
     }
 }
 
-pub(crate) struct Tokenizer<'a> {
+pub struct Tokenizer<'a> {
     content: &'a [u8],
     start: usize,
     line: usize,
@@ -100,8 +98,7 @@ pub(crate) struct Tokenizer<'a> {
 }
 
 impl<'a> Tokenizer<'a> {
-    #[must_use]
-    pub(crate) fn new(content: &'a [u8]) -> Self {
+    pub fn new(content: &'a [u8]) -> Self {
         Tokenizer {
             content,
             start: 0,
@@ -124,14 +121,14 @@ impl<'a> Tokenizer<'a> {
         }
     }
 
-    fn parse_string(&mut self) -> anyhow::Result<TokenType> {
+    fn parse_string(&mut self) -> Result<TokenType, TokenizeError> {
         self.start = self.pos;
 
         loop {
             match self.peek(1) {
                 Some(c) if *c == b'"' => break,
                 Some(_) => self.pos += 1,
-                None => return Err(anyhow!("Unterminated string"))?,
+                None => return Err(TokenizeError::UnterminatedString),
             }
         }
 
@@ -142,7 +139,7 @@ impl<'a> Tokenizer<'a> {
         ))
     }
 
-    fn parse_number(&mut self) -> anyhow::Result<TokenType> {
+    fn parse_number(&mut self) -> Result<TokenType, TokenizeError> {
         self.start = self.pos;
 
         while self.peek(1).is_some_and(|c| c.is_ascii_digit()) {
@@ -158,14 +155,11 @@ impl<'a> Tokenizer<'a> {
         }
 
         Ok(TokenType::Number(
-            str::from_utf8(&self.content[self.start..=self.pos])
-                .context("Failed to convert bytes array to string slice")?
-                .parse::<f32>()
-                .context("Failed to convert string slice to Number")?,
+            str::from_utf8(&self.content[self.start..=self.pos])?.parse::<f32>()?,
         ))
     }
 
-    fn parse_identifier(&mut self) -> anyhow::Result<TokenType> {
+    fn parse_identifier(&mut self) -> Result<TokenType, TokenizeError> {
         self.start = self.pos;
 
         while self
@@ -183,7 +177,7 @@ impl<'a> Tokenizer<'a> {
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
-    type Item = anyhow::Result<Token>;
+    type Item = Result<Token, TokenizeError>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -229,18 +223,17 @@ impl<'a> Iterator for Tokenizer<'a> {
             b'<' => self.match_or(b'=', TokenType::LessEqual, TokenType::Less)?,
             b'>' => self.match_or(b'=', TokenType::GreaterEqual, TokenType::Greater)?,
             b'!' => self.match_or(b'=', TokenType::BangEqual, TokenType::Bang)?,
-            b'"' => match self.parse_string().context("Failed to parse string") {
+            b'"' => match self.parse_string() {
                 Ok(string) => string,
                 Err(error) => return Some(Err(error)),
             },
             other => {
                 let result = if other.is_ascii_digit() {
-                    self.parse_number().context("Failed to parse number")
+                    self.parse_number()
                 } else if other.is_ascii_alphabetic() {
                     self.parse_identifier()
-                        .context("Failed to parse identifier")
                 } else {
-                    return Some(Err(anyhow!("Unexpected character")));
+                    return Some(Err(TokenizeError::UnexpectedCharacter));
                 };
 
                 match result {
@@ -251,7 +244,6 @@ impl<'a> Iterator for Tokenizer<'a> {
         };
 
         let token = Some(Ok(Token::new(
-            self.line,
             token_type,
             &self.content[self.start..=self.pos],
         )));

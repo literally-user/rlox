@@ -1,4 +1,5 @@
 mod ast;
+mod errors;
 mod parser;
 mod tokenizer;
 
@@ -9,22 +10,18 @@ use std::{
 
 use anyhow::{Context, anyhow};
 
-use crate::{
-    ast::Expression,
-    parser::Parser,
-    tokenizer::{Token, Tokenizer},
-};
+use crate::{ast::Expression, errors::TokenizeError, parser::Parser, tokenizer::Tokenizer};
 
 fn execute(content: &[u8]) -> anyhow::Result<()> {
-    let expression = Parser::new(
-        Tokenizer::new(content)
-            .collect::<anyhow::Result<Vec<Token>>>()
-            .context("Failed to tokenize")?,
-    )
-    .parse()
-    .context("Failed to parse AST")?;
+    let tokens = Tokenizer::new(content)
+        .collect::<Result<Vec<_>, TokenizeError>>()
+        .context("failed to tokenize")?;
 
-    println!("{:#?}", expression.eval());
+    if !tokens.is_empty() {
+        let expression = Parser::new(tokens).parse().context("failed to parse AST")?;
+
+        println!("{:#?}", expression.eval());
+    }
 
     Ok(())
 }
@@ -35,27 +32,27 @@ fn repl() -> anyhow::Result<()> {
         print!(";; ");
         std::io::stdout()
             .flush()
-            .context("Failed to flush stdout")?;
+            .context("failed to flush stdout")?;
 
         let mut content = Vec::new();
         stdin
             .lock()
             .read_until(b'\n', &mut content)
-            .context("Failed to read command from stdin")?;
+            .context("failed to read command from stdin")?;
 
-        execute(&content).context("Failed to execute REPL command")?;
+        execute(&content).context("failed to execute REPL command")?;
     }
 }
 
 fn interpret(source: &str) -> anyhow::Result<()> {
-    let mut source = File::open(source).context("Failed to open source file")?;
+    let mut source = File::open(source).context("failed to open source file")?;
 
     let mut content = Vec::new();
     source
         .read_to_end(&mut content)
-        .context("Failed to read source contents")?;
+        .context("failed to read source contents")?;
 
-    execute(&content).context("Failed to execute source file")
+    execute(&content).context("failed to execute source file")
 }
 
 // Very simple implementation. Maybe i'll improve it in the near future
@@ -79,7 +76,7 @@ fn main() {
     match arguments.as_slice() {
         [] => repl(),
         [source] => interpret(source),
-        _ => Err(anyhow!("Invalid command provided; usage: rlox [source]")),
+        _ => Err(anyhow!("invalid command provided; usage: rlox [source]")),
     }
     .map_err(handle_exception_trace);
 }
