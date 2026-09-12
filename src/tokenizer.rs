@@ -75,7 +75,7 @@ static RESERVED: LazyLock<HashMap<&'static str, TokenType>> = LazyLock::new(|| {
     .collect::<_>()
 });
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
@@ -187,7 +187,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                     self.start = self.pos;
                     self.line += 1;
                 }
-                b'\t' | b' ' | b'r' => {
+                b'\t' | b' ' | b'\r' => {
                     self.pos += 1;
                     self.start = self.pos;
                 }
@@ -252,5 +252,106 @@ impl<'a> Iterator for Tokenizer<'a> {
         self.start = self.pos;
 
         token
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rstest::rstest;
+
+    fn types(content: &str) -> Vec<TokenType> {
+        Tokenizer::new(content.as_bytes())
+            .map(|t| t.unwrap().token_type)
+            .collect()
+    }
+
+    #[rstest]
+    #[case("13", 13.0)]
+    #[case("13.0", 13.0)]
+    #[case("13.0000000000000000000000000", 13.0)]
+    fn parse_numbers(#[case] input: &str, #[case] expected: f32) {
+        assert_eq!(types(input), [TokenType::Number(expected)])
+    }
+
+    #[test]
+    fn parse_string() {
+        assert_eq!(
+            types("\"Hello world!\""),
+            [TokenType::String("Hello world!".to_string())]
+        )
+    }
+
+    #[test]
+    #[should_panic]
+    fn parse_unterminated_string() {
+        types("\"Hello");
+    }
+
+    #[test]
+    fn parse_identifiers() {
+        assert_eq!(
+            types("foo bar hello"),
+            [
+                TokenType::Identifier,
+                TokenType::Identifier,
+                TokenType::Identifier
+            ]
+        )
+    }
+
+    #[test]
+    fn parse_reserved() {
+        assert_eq!(
+            types("and class else false fun for if nil or print super return this true var while"),
+            [
+                TokenType::And,
+                TokenType::Class,
+                TokenType::Else,
+                TokenType::False,
+                TokenType::Fun,
+                TokenType::For,
+                TokenType::If,
+                TokenType::Nil,
+                TokenType::Or,
+                TokenType::Print,
+                TokenType::Super,
+                TokenType::Return,
+                TokenType::This,
+                TokenType::True,
+                TokenType::Var,
+                TokenType::While,
+            ]
+        )
+    }
+
+    #[test]
+    fn parse_operators() {
+        assert_eq!(
+            types("( ) { } , . - + ; * / ? : = < > ! != <= >= =="),
+            [
+                TokenType::LeftParen,
+                TokenType::RightParen,
+                TokenType::LeftBrace,
+                TokenType::RightBrace,
+                TokenType::Comma,
+                TokenType::Dot,
+                TokenType::Minus,
+                TokenType::Plus,
+                TokenType::Semicolon,
+                TokenType::Star,
+                TokenType::Slash,
+                TokenType::Question,
+                TokenType::Colon,
+                TokenType::Equal,
+                TokenType::Less,
+                TokenType::Greater,
+                TokenType::Bang,
+                TokenType::BangEqual,
+                TokenType::LessEqual,
+                TokenType::GreaterEqual,
+                TokenType::EqualEqual,
+            ]
+        )
     }
 }

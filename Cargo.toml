@@ -14,3 +14,6 @@ repository = "https://github.com/literally-user/rlox"
 [dependencies]
 anyhow = "1.0.104"
 log = "0.4.34"
+
+[dev-dependencies]
+rstest = "0.27.0"

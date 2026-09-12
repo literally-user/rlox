@@ -18,7 +18,9 @@ fn execute(content: &[u8]) -> anyhow::Result<()> {
         .context("failed to tokenize")?;
 
     if !tokens.is_empty() {
-        let expression = Parser::new(tokens).parse().context("failed to parse AST")?;
+        let expression = Parser::new(&tokens)
+            .parse()
+            .context("failed to parse AST")?;
 
         println!("{:#?}", expression.eval());
     }

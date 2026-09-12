@@ -15,13 +15,13 @@ pub enum Literal {
     String(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum UnaryOp {
     Negate,
     Not,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BinaryOp {
     Add,
     Sub,
@@ -35,7 +35,7 @@ pub enum BinaryOp {
     NotEqual,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Expr {
     Binary(Box<Binary>),
     Unary(Box<Unary>),
@@ -44,20 +44,20 @@ pub enum Expr {
     Ternary(Box<Ternary>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Unary {
     op: UnaryOp,
     right: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Binary {
     right: Expr,
     op: BinaryOp,
     left: Expr,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Ternary {
     condition: Expr,
     success: Expr,
