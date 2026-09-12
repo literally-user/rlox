@@ -260,24 +260,24 @@ mod tests {
     use super::*;
     use rstest::rstest;
 
-    fn types(content: &[u8]) -> Vec<TokenType> {
-        Tokenizer::new(content)
+    fn types(content: &str) -> Vec<TokenType> {
+        Tokenizer::new(content.as_bytes())
             .map(|t| t.unwrap().token_type)
             .collect()
     }
 
     #[rstest]
-    #[case(b"13", 13.0)]
-    #[case(b"13.0", 13.0)]
-    #[case(b"13.0000000000000000000000000", 13.0)]
-    fn parse_numbers(#[case] input: &[u8], #[case] expected: f32) {
+    #[case("13", 13.0)]
+    #[case("13.0", 13.0)]
+    #[case("13.0000000000000000000000000", 13.0)]
+    fn parse_numbers(#[case] input: &str, #[case] expected: f32) {
         assert_eq!(types(input), [TokenType::Number(expected)])
     }
 
     #[test]
     fn parse_string() {
         assert_eq!(
-            types(b"\"Hello world!\""),
+            types("\"Hello world!\""),
             [TokenType::String("Hello world!".to_string())]
         )
     }
@@ -285,13 +285,13 @@ mod tests {
     #[test]
     #[should_panic]
     fn parse_unterminated_string() {
-        types(b"\"Hello");
+        types("\"Hello");
     }
 
     #[test]
     fn parse_identifiers() {
         assert_eq!(
-            types(b"foo bar hello"),
+            types("foo bar hello"),
             [
                 TokenType::Identifier,
                 TokenType::Identifier,
@@ -303,7 +303,7 @@ mod tests {
     #[test]
     fn parse_reserved() {
         assert_eq!(
-            types(b"and class else false fun for if nil or print super return this true var while"),
+            types("and class else false fun for if nil or print super return this true var while"),
             [
                 TokenType::And,
                 TokenType::Class,
@@ -328,7 +328,7 @@ mod tests {
     #[test]
     fn parse_operators() {
         assert_eq!(
-            types(b"( ) { } , . - + ; * / ? : = < > ! != <= >= =="),
+            types("( ) { } , . - + ; * / ? : = < > ! != <= >= =="),
             [
                 TokenType::LeftParen,
                 TokenType::RightParen,

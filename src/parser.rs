@@ -169,3 +169,82 @@ impl<'a> Parser<'a> {
         self.equality()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{ast::Expression, tokenizer::Tokenizer};
+    use rstest::rstest;
+
+    fn parse(content: &str) -> Expr {
+        Parser::new(
+            &Tokenizer::new(content.as_bytes())
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap(),
+        )
+        .parse()
+        .unwrap()
+    }
+
+    #[rstest]
+    #[case("true ? 10 : 20", Literal::Number(10.0))]
+    #[case("false ? 10 : 20", Literal::Number(20.0))]
+    fn evaluate_ternary_expression(#[case] expression: &str, #[case] result: Literal) {
+        assert_eq!(parse(expression).eval().unwrap(), result);
+    }
+
+    #[rstest]
+    #[case("10 == 20", Literal::False)]
+    #[case("10 != 20", Literal::True)]
+    fn evaluate_equality(#[case] expression: &str, #[case] result: Literal) {
+        assert_eq!(parse(expression).eval().unwrap(), result);
+    }
+
+    #[rstest]
+    #[case("10 < 20", Literal::True)]
+    #[case("10 > 20", Literal::False)]
+    fn evaluate_comparison(#[case] expression: &str, #[case] result: Literal) {
+        assert_eq!(parse(expression).eval().unwrap(), result);
+    }
+
+    #[rstest]
+    #[case("10 + 20", Literal::Number(30.0))]
+    #[case("10 + 30", Literal::Number(40.0))]
+    #[case("10 + 30 + 10", Literal::Number(50.0))]
+    fn evaluate_term(#[case] expression: &str, #[case] result: Literal) {
+        assert_eq!(parse(expression).eval().unwrap(), result);
+    }
+
+    #[rstest]
+    #[case("10 * 20", Literal::Number(200.0))]
+    #[case("10 * 30", Literal::Number(300.0))]
+    #[case("10 * 30 * 100", Literal::Number(30000.0))]
+    fn evaluate_factor(#[case] expression: &str, #[case] result: Literal) {
+        assert_eq!(parse(expression).eval().unwrap(), result);
+    }
+
+    #[rstest]
+    #[case("!true", Literal::False)]
+    #[case("!false", Literal::True)]
+    fn evaluate_unary(#[case] expression: &str, #[case] result: Literal) {
+        assert_eq!(parse(expression).eval().unwrap(), result);
+    }
+
+    #[rstest]
+    #[case("3 * \"Hello\"", Literal::String("HelloHelloHello".to_string()))]
+    #[case("\"Hello\" * 3", Literal::String("HelloHelloHello".to_string()))]
+    fn evaluate_string_factoring(#[case] expression: &str, #[case] result: Literal) {
+        assert_eq!(parse(expression).eval().unwrap(), result);
+    }
+
+    #[rstest]
+    #[case("10 + true")]
+    #[case("true + true")]
+    #[case("\"Hello!\" + true")]
+    #[case("\"Hello!\" * \"fsdfsdf\"")]
+    #[case("\"Hello!\" / false")]
+    #[should_panic]
+    fn evaluate_term_with_invalid_operand_types(#[case] expression: &str) {
+        parse(expression).eval().unwrap();
+    }
+}
