@@ -107,6 +107,7 @@ impl<'a> Parser<'a> {
             let op = match token.token_type {
                 TokenType::Plus => BinaryOp::Add,
                 TokenType::Minus => BinaryOp::Sub,
+                TokenType::Percent => BinaryOp::Rem,
                 _ => break,
             };
             if self.peek(2).is_err() {
@@ -189,7 +190,7 @@ mod tests {
     #[rstest]
     #[case("true ? 10 : 20", Literal::Number(10.0))]
     #[case("false ? 10 : 20", Literal::Number(20.0))]
-    fn evaluate_ternary_expression(#[case] expression: &str, #[case] result: Literal) {
+    fn evaluate_ternary(#[case] expression: &str, #[case] result: Literal) {
         assert_eq!(parse(expression).eval().unwrap(), result);
     }
 
@@ -211,6 +212,7 @@ mod tests {
     #[case("10 + 20", Literal::Number(30.0))]
     #[case("10 + 30", Literal::Number(40.0))]
     #[case("10 + 30 + 10", Literal::Number(50.0))]
+    #[case("10 % 2", Literal::Number(0.0))]
     fn evaluate_term(#[case] expression: &str, #[case] result: Literal) {
         assert_eq!(parse(expression).eval().unwrap(), result);
     }

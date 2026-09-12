@@ -1,4 +1,4 @@
-use std::ops::{Add, Div, Mul, Neg, Not, Sub};
+use std::ops::{Add, Div, Mul, Neg, Not, Rem, Sub};
 
 use crate::errors::{ArithmeticError, ConditionError, EvaluationError, UnaryConvertionError};
 
@@ -33,6 +33,7 @@ pub enum BinaryOp {
     Greater,
     Equal,
     NotEqual,
+    Rem,
 }
 
 #[derive(Debug, PartialEq)]
@@ -171,6 +172,19 @@ impl Not for Literal {
     }
 }
 
+impl Rem for Literal {
+    type Output = Result<Literal, ArithmeticError>;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        match (self, rhs) {
+            (Literal::Number(first), Literal::Number(second)) => {
+                Ok(Literal::Number(first % second))
+            }
+            _ => Err(ArithmeticError::InvalidOperandsTypes),
+        }
+    }
+}
+
 impl Expression for Expr {
     fn eval(self) -> Result<Literal, EvaluationError> {
         match self {
@@ -182,6 +196,7 @@ impl Expression for Expr {
                     BinaryOp::Mul => left * right,
                     BinaryOp::Div => left / right,
                     BinaryOp::Sub => left - right,
+                    BinaryOp::Rem => left % right,
                     _ => {
                         let result = match binary.op {
                             BinaryOp::Equal => left == right,
