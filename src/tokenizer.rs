@@ -16,6 +16,7 @@ pub enum TokenType {
     Semicolon,
     Slash,
     Star,
+    Percent,
 
     // One or two character tokens.
     Bang,
@@ -218,6 +219,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             b'*' => TokenType::Star,
             b'/' => TokenType::Slash,
             b'?' => TokenType::Question,
+            b'%' => TokenType::Percent,
             b':' => TokenType::Colon,
             b'=' => self.match_or(b'=', TokenType::EqualEqual, TokenType::Equal)?,
             b'<' => self.match_or(b'=', TokenType::LessEqual, TokenType::Less)?,
@@ -328,7 +330,7 @@ mod tests {
     #[test]
     fn parse_operators() {
         assert_eq!(
-            types("( ) { } , . - + ; * / ? : = < > ! != <= >= =="),
+            types("( ) { } , . - + ; * / ? : = < > ! != <= >= == %"),
             [
                 TokenType::LeftParen,
                 TokenType::RightParen,
@@ -351,6 +353,7 @@ mod tests {
                 TokenType::LessEqual,
                 TokenType::GreaterEqual,
                 TokenType::EqualEqual,
+                TokenType::Percent,
             ]
         )
     }
