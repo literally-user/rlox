@@ -4,13 +4,13 @@ use crate::{
     tokenizer::{Token, TokenType},
 };
 
-pub struct Parser {
-    tokens: Vec<Token>,
+pub struct Parser<'a> {
+    tokens: &'a [Token],
     pos: usize,
 }
 
-impl Parser {
-    pub(crate) fn new(tokens: Vec<Token>) -> Self {
+impl<'a> Parser<'a> {
+    pub(crate) fn new(tokens: &'a [Token]) -> Self {
         Parser { tokens, pos: 0 }
     }
 

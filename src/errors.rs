@@ -34,13 +34,13 @@ pub enum ParsingError {
     UnfinishedEqualityExpression,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ConvertionError {
     StringParseError(Utf8Error),
     NumberParseError(ParseFloatError),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenizeError {
     UnexpectedCharacter,
     UnterminatedString,
